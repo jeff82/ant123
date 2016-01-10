@@ -238,9 +238,9 @@ class BACA:
             for col in range(self.CityCount):
                 distanceHH = sqrt(pow(CityList[row][0][0]-CityList[col][0][0],2)+pow(CityList[row][0][1]-CityList[col][0][1],2))
                 distanceHT = sqrt(pow(CityList[row][0][0]-CityList[col][1][0],2)+pow(CityList[row][0][1]-CityList[col][1][1],2))
-                distanceTT = sqrt(pow(CityList[row][1][0]-CityList[col][1][0],2)+pow(CityList[row][1][1]-CityList[col][1][1],2))
-                distanceTH = sqrt(pow(CityList[row][1][0]-CityList[col][0][0],2)+pow(CityList[row][1][1]-CityList[col][0][1],2))
-                distanceList.append([distanceHH,distanceHT,distanceTT,distanceTH])
+                distanceTT = sqrt(pow(CityList[row][1][0]-CityList[col][0][0],2)+pow(CityList[row][1][1]-CityList[col][0][1],2))
+                distanceTH = sqrt(pow(CityList[row][1][0]-CityList[col][1][0],2)+pow(CityList[row][1][1]-CityList[col][1][1],2))
+                distanceList.append([distanceHH,distanceHT,distanceTH,distanceTT])
             CityDistanceList.append(distanceList)
         print (len(CityDistanceList),len(CityDistanceList[1]))
         for itx in range(len(CityList)):
@@ -270,7 +270,8 @@ class BACA:
         """randomly put ants on cities"""
         for antNum in range(self.AntCount):
             city = random.randint(1, self.CityCount)
-            ant = ANT(city)
+			pos=random.randint(0,1)
+            ant = ANT([city,pos])
             AntList.append(ant)
             #print ant.CurrCity
     def Search(self):
@@ -379,7 +380,7 @@ class ANT:
         """sum up the path length"""
         for city in self.TabuCityList[0:-1]:
             nextCity = self.TabuCityList[self.TabuCityList.index(city)+1]
-            self.CurrLen = self.CurrLen + CityDistanceList[city-1][nextCity-1]
+            self.CurrLen = self.CurrLen + CityDistanceList[city-1][nextCity[0]-1][nextCity[1]+2]
         lastCity = self.TabuCityList[-1]
         firstCity = self.TabuCityList[0]
         self.CurrLen = self.CurrLen + CityDistanceList[lastCity-1][firstCity-1]
@@ -391,9 +392,12 @@ class ANT:
         self.TabuCityList.append(city)
         self.TabuCitySet.add(city[0])
         self.AllowedCitySet = CitySet - self.TabuCitySet  
+		
+		
+		
 if __name__ == "__main__":
     theBaca = BACA()
     theBaca.ReadCityInfo()
-    theBaca.Search()
+    theBaca.Search()`11	
     os.system("pause")
    
