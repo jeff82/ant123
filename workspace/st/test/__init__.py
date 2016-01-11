@@ -1,6 +1,6 @@
 import numpy as np
 import os
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import string
 from warnings import catch_warnings
 ff=open("dot4.txt")
@@ -213,7 +213,7 @@ CitySet=sets.Set(range(1,len(CityList)+1))
 class BACA:
     "implement basic ant colony algorithm"
     # following are some essential parameters/attributes for BACA
-    def __init__(self, cityCount=51, antCount=34, q=80, alpha=2, beta=5, rou=0.2, nMax=1):
+    def __init__(self, cityCount=51, antCount=34, q=80, alpha=2, beta=5, rou=0.2, nMax=10):
         self.CityCount = len(linehead)
         self.AntCount = int(self.CityCount*0.8)
         self.Q = q
@@ -242,10 +242,10 @@ class BACA:
         for row in range(self.CityCount):
             distanceList = []
             for col in range(self.CityCount):
-                distanceHH = sqrt(pow(CityList[row][0][0]-CityList[col][0][0],2)+pow(CityList[row][0][1]-CityList[col][0][1],2))+0.003
-                distanceHT = sqrt(pow(CityList[row][0][0]-CityList[col][1][0],2)+pow(CityList[row][0][1]-CityList[col][1][1],2))+0.003
-                distanceTH = sqrt(pow(CityList[row][1][0]-CityList[col][0][0],2)+pow(CityList[row][1][1]-CityList[col][0][1],2))+0.003
-                distanceTT = sqrt(pow(CityList[row][1][0]-CityList[col][1][0],2)+pow(CityList[row][1][1]-CityList[col][1][1],2))+0.003
+                distanceHH = sqrt(pow(CityList[row][0][0]-CityList[col][0][0],2)+pow(CityList[row][0][1]-CityList[col][0][1],2))+0.0003
+                distanceHT = sqrt(pow(CityList[row][0][0]-CityList[col][1][0],2)+pow(CityList[row][0][1]-CityList[col][1][1],2))+0.0003
+                distanceTH = sqrt(pow(CityList[row][1][0]-CityList[col][0][0],2)+pow(CityList[row][1][1]-CityList[col][0][1],2))+0.0003
+                distanceTT = sqrt(pow(CityList[row][1][0]-CityList[col][1][0],2)+pow(CityList[row][1][1]-CityList[col][1][1],2))+0.0003
                 distanceList.append([distanceHH,distanceHT,distanceTH,distanceTT])
             CityDistanceList.append(distanceList)
            
@@ -280,6 +280,18 @@ class BACA:
             ant = ANT([city,pos])
             AntList.append(ant)
             #print ant.CurrCity
+    def outRout(self,tour):
+        for [city,pos] in tour:
+            if pos==1:
+                seg=line[city]
+            else:
+                seg=line[city][::-1]
+            if len(line[city][0])>1:
+                x.extend([tp[0] for tp in seg])
+                y.extend([tp[1] for tp in seg])
+                x.extend([0.0])  
+                y.extend([0.0])
+
     def Search(self):
         """search solution space"""
         for iter in range(self.Nmax):
@@ -298,6 +310,9 @@ class BACA:
                 self.Shortest = tmpLen
                 BestTour = tmpTour
             print (iter,":",self.Shortest,":",BestTour)
+            if iter == self.Nmax-1:
+                BestTour = tmpTour[:]
+                outRout(BestTour)
             self.UpdatePheromoneTrail()
 ##            for ant in AntList:
 ##                city = ant.TabuCityList[-1]
