@@ -36,14 +36,16 @@ def rmvDump():
     Pt=lastPt=np.array([0,0])
     for it in line:
         for idd,itt in enumerate(it):
-            if len(it)<20:
+            if len(it)<3:
                 break
             Pt=np.array(itt)
             dist=Pt-lastPt
             lastPt=Pt
             dist=np.sqrt(dist.dot(dist))
             if dist<0.004:
-                if idd==len(it)-1:
+                if len(it)<4:
+                    del it[1]
+                elif idd==len(it)-1:
                     it[-2]=it[idd]
                     del it[idd]
                 else:
@@ -64,8 +66,11 @@ def cmptAngle(pt):
     vecm=vec1.dot(vec2)
     L1=np.sqrt(vec1.dot(vec1))
     L2=np.sqrt(vec2.dot(vec2))
-    cosangle=vecm/(L1*L2)
-    angle=np.arccos(cosangle)*180/np.pi
+    if L1*L2==0:
+        angle=180
+    else:
+        cosangle=vecm/(L1*L2)
+        angle=np.arccos(cosangle)*180/np.pi
     return angle
    
 def FindConn(index, Pt,Ls=[] ):
@@ -201,12 +206,14 @@ PheromoneTrailList = []         # pheromone trail list
 PheromoneDeltaTrailList = []    # delta pheromone trail list
 CityDistanceList = []           # city distance list
 AntList = []                    # ants
-markVol = 2000.0
+markVol = 1000.0
 stopTm  = 3e-4
+CityList=linehead
+CitySet=sets.Set(range(1,len(CityList)+1))  
 class BACA:
     "implement basic ant colony algorithm"
     # following are some essential parameters/attributes for BACA
-    def __init__(self, cityCount=51, antCount=34, q=80, alpha=2, beta=5, rou=0.3, nMax=100):
+    def __init__(self, cityCount=51, antCount=34, q=80, alpha=2, beta=5, rou=0.2, nMax=1):
         self.CityCount = len(linehead)
         self.AntCount = int(self.CityCount*0.8)
         self.Q = q
@@ -230,17 +237,15 @@ class BACA:
             PheromoneTrailList.append(pheromoneList)
             PheromoneDeltaTrailList.append(pheromoneDeltaList)
        
-    def ReadCityInfo(self):
-        CityList=linehead
-        CitySet=sets.Set(range(len(CityList)))          
+    def ReadCityInfo(self):        
         #print CityDistanceList
         for row in range(self.CityCount):
             distanceList = []
             for col in range(self.CityCount):
-                distanceHH = sqrt(pow(CityList[row][0][0]-CityList[col][0][0],2)+pow(CityList[row][0][1]-CityList[col][0][1],2))
-                distanceHT = sqrt(pow(CityList[row][0][0]-CityList[col][1][0],2)+pow(CityList[row][0][1]-CityList[col][1][1],2))
-                distanceTT = sqrt(pow(CityList[row][1][0]-CityList[col][0][0],2)+pow(CityList[row][1][1]-CityList[col][0][1],2))
-                distanceTH = sqrt(pow(CityList[row][1][0]-CityList[col][1][0],2)+pow(CityList[row][1][1]-CityList[col][1][1],2))
+                distanceHH = sqrt(pow(CityList[row][0][0]-CityList[col][0][0],2)+pow(CityList[row][0][1]-CityList[col][0][1],2))+0.003
+                distanceHT = sqrt(pow(CityList[row][0][0]-CityList[col][1][0],2)+pow(CityList[row][0][1]-CityList[col][1][1],2))+0.003
+                distanceTH = sqrt(pow(CityList[row][1][0]-CityList[col][0][0],2)+pow(CityList[row][1][1]-CityList[col][0][1],2))+0.003
+                distanceTT = sqrt(pow(CityList[row][1][0]-CityList[col][1][0],2)+pow(CityList[row][1][1]-CityList[col][1][1],2))+0.003
                 distanceList.append([distanceHH,distanceHT,distanceTH,distanceTT])
             CityDistanceList.append(distanceList)
            
@@ -271,7 +276,7 @@ class BACA:
         """randomly put ants on cities"""
         for antNum in range(self.AntCount):
             city = random.randint(1, self.CityCount)
-            pos=random.randint(0,1)
+            pos=int(random.uniform(0,1.3))
             ant = ANT([city,pos])
             AntList.append(ant)
             #print ant.CurrCity
@@ -339,16 +344,23 @@ class ANT:
         sumProbability = 0.0
         #
         for city in self.AllowedCitySet:
-            sumProbability = sumProbability + (pow(PheromoneTrailList[self.CurrCity-1][city-1][0], alpha)
-                                               * pow(1.0/CityDistanceList[self.CurrCity-1][city-1][2], beta))
-            +(pow(PheromoneTrailList[self.CurrCity-1][city-1][1], alpha)
-              * pow(1.0/CityDistanceList[self.CurrCity-1][city-1][3], beta))
+            sumProbability = sumProbability + (pow(PheromoneTrailList[self.CurrCity[0]-1][city-1][0], alpha)
+                                               * pow(1.0/CityDistanceList[self.CurrCity[0]-1][city-1][2], beta))
+            +(pow(PheromoneTrailList[self.CurrCity[0]-1][city-1][1], alpha)
+              * pow(1.0/CityDistanceList[self.CurrCity[0]-1][city-1][3], beta))
         self.TransferProbabilityList = []
         for city in self.AllowedCitySet:
-            transferProbability1 = (pow(PheromoneTrailList[self.CurrCity-1][city-1][0], alpha)
-                                * pow(1.0/CityDistanceList[self.CurrCity-1][city-1][2], beta))/sumProbability
-            transferProbability2 = (pow(PheromoneTrailList[self.CurrCity-1][city-1][1], alpha)
-                                * pow(1.0/CityDistanceList[self.CurrCity-1][city-1][3], beta))/sumProbability
+            currPos = self.CurrCity[1]
+            if currPos==0:
+                transferProbability1 = (pow(PheromoneTrailList[self.CurrCity[0]-1][city-1][0], alpha)
+                                    * pow(1.0/CityDistanceList[self.CurrCity[0]-1][city-1][2], beta))/sumProbability
+                transferProbability2 = (pow(PheromoneTrailList[self.CurrCity[0]-1][city-1][1], alpha)
+                                    * pow(1.0/CityDistanceList[self.CurrCity[0]-1][city-1][3], beta))/sumProbability
+            else:
+                transferProbability1 = (pow(PheromoneTrailList[city-1][self.CurrCity[0]-1][0], alpha)
+                                    * pow(1.0/CityDistanceList[city-1][self.CurrCity[0]-1][1], beta))/sumProbability
+                transferProbability2 = (pow(PheromoneTrailList[city-1][self.CurrCity[0]-1][1], alpha)
+                                    * pow(1.0/CityDistanceList[city-1][self.CurrCity[0]-1][0], beta))/sumProbability                  
             self.TransferProbabilityList.append([city,transferProbability1,transferProbability2])
         # determine next city
         select = 0.0
@@ -381,10 +393,20 @@ class ANT:
         """sum up the path length"""
         for city in self.TabuCityList[0:-1]:
             nextCity = self.TabuCityList[self.TabuCityList.index(city)+1]
-            self.CurrLen = self.CurrLen + CityDistanceList[city-1][nextCity[0]-1][nextCity[1]+2]
+            rout=[city[1],nextCity[1]]
+            distPos=1
+            if rout==[0,0]:
+                distPos=2
+            elif rout==[0,1]:
+                distPos=3
+            elif rout==[1,0]:
+                distPos=0
+            elif rout==[0,1]:
+                distPos=1
+            self.CurrLen = self.CurrLen + CityDistanceList[city[0]-1][nextCity[0]-1][distPos]
         lastCity = self.TabuCityList[-1]
         firstCity = self.TabuCityList[0]
-        self.CurrLen = self.CurrLen + CityDistanceList[lastCity[0]-1][firstCity[0]-1][firstCity[1]+2]
+        self.CurrLen = self.CurrLen + CityDistanceList[lastCity[0]-1][firstCity[0]-1][lastCity[1]+2]
     def AddCity(self,city):
         """add city to tabu list and set"""
         if city[0] <= 0:
@@ -393,11 +415,9 @@ class ANT:
         self.TabuCityList.append(city)
         self.TabuCitySet.add(city[0])
         self.AllowedCitySet = CitySet - self.TabuCitySet  
-       
-       
-       
-
-theBaca = BACA()
-theBaca.ReadCityInfo()
-theBaca.Search()
-os.system("pause")
+if __name__ == "__main__":
+    theBaca = BACA()
+    theBaca.ReadCityInfo()
+    theBaca.Search()
+    os.system("pause")
+   
