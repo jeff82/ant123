@@ -1,5 +1,6 @@
 import numpy as np
-import matplotlib.pyplot as plt
+import os
+#import matplotlib.pyplot as plt
 import string
 from warnings import catch_warnings
 ff=open("dot4.txt")
@@ -174,7 +175,7 @@ for idx in range(0,len(line)):
         y.extend([tp[1] for tp in line[idx]])
         x.extend([0.0])  
         y.extend([0.0])
-plt.plot(x,y,'*-')
+#plt.plot(x,y,'*-')
 fl=open('ss.txt','w')
 for i in range(len(x)):
     fl.write(str(x[i]))
@@ -215,7 +216,7 @@ class BACA:
         self.Nmax = nMax
         self.Shortest = 10e6
         # set random seed
-        random.seed()       
+        random.seed()      
         # init global data structure
         for nCity in range(self.CityCount):
             BestTour.append(0)
@@ -230,7 +231,7 @@ class BACA:
             PheromoneDeltaTrailList.append(pheromoneDeltaList)
        
     def ReadCityInfo(self):
-        CityList=linehead[:]
+        CityList=linehead
         CitySet=sets.Set(range(len(CityList)))          
         #print CityDistanceList
         for row in range(self.CityCount):
@@ -242,7 +243,7 @@ class BACA:
                 distanceTH = sqrt(pow(CityList[row][1][0]-CityList[col][1][0],2)+pow(CityList[row][1][1]-CityList[col][1][1],2))
                 distanceList.append([distanceHH,distanceHT,distanceTH,distanceTT])
             CityDistanceList.append(distanceList)
-        print (len(CityDistanceList),len(CityDistanceList[1]))
+           
         for itx in range(len(CityList)):
             if len(CityList[itx][2])<1:
                 continue
@@ -270,7 +271,7 @@ class BACA:
         """randomly put ants on cities"""
         for antNum in range(self.AntCount):
             city = random.randint(1, self.CityCount)
-			pos=random.randint(0,1)
+            pos=random.randint(0,1)
             ant = ANT([city,pos])
             AntList.append(ant)
             #print ant.CurrCity
@@ -302,12 +303,12 @@ class BACA:
             for city in ant.TabuCityList[0:-1]:
                 idx = ant.TabuCityList.index(city)
                 nextCity = ant.TabuCityList[idx+1]
-                PheromoneDeltaTrailList[city-1][nextCity-1] = self.Q/ant.CurrLen
-                PheromoneDeltaTrailList[nextCity-1][city-1] = self.Q/ant.CurrLen
+                PheromoneDeltaTrailList[city[0]-1][nextCity[0]-1] = self.Q/ant.CurrLen
+                PheromoneDeltaTrailList[nextCity[0]-1][city[0]-1] = self.Q/ant.CurrLen
             lastCity = ant.TabuCityList[-1]
             firstCity = ant.TabuCityList[0]
-            PheromoneDeltaTrailList[lastCity-1][firstCity-1] = self.Q/ant.CurrLen
-            PheromoneDeltaTrailList[firstCity-1][lastCity-1] = self.Q/ant.CurrLen
+            PheromoneDeltaTrailList[lastCity[0]-1][firstCity[0]-1] = self.Q/ant.CurrLen
+            PheromoneDeltaTrailList[firstCity[0]-1][lastCity[0]-1] = self.Q/ant.CurrLen
         for (seg1,seg1,seg1No) in CityList:
             for (seg2,seg2,seg2No) in CityList:
                 city1=seg1No[0][0]
@@ -383,7 +384,7 @@ class ANT:
             self.CurrLen = self.CurrLen + CityDistanceList[city-1][nextCity[0]-1][nextCity[1]+2]
         lastCity = self.TabuCityList[-1]
         firstCity = self.TabuCityList[0]
-        self.CurrLen = self.CurrLen + CityDistanceList[lastCity-1][firstCity-1]
+        self.CurrLen = self.CurrLen + CityDistanceList[lastCity[0]-1][firstCity[0]-1][firstCity[1]+2]
     def AddCity(self,city):
         """add city to tabu list and set"""
         if city[0] <= 0:
@@ -392,12 +393,11 @@ class ANT:
         self.TabuCityList.append(city)
         self.TabuCitySet.add(city[0])
         self.AllowedCitySet = CitySet - self.TabuCitySet  
-		
-		
-		
-if __name__ == "__main__":
-    theBaca = BACA()
-    theBaca.ReadCityInfo()
-    theBaca.Search()`11	
-    os.system("pause")
-   
+       
+       
+       
+
+theBaca = BACA()
+theBaca.ReadCityInfo()
+theBaca.Search()
+os.system("pause")
