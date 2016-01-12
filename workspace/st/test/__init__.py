@@ -181,13 +181,13 @@ for idx in range(0,len(line)):
         x.extend([0.0])  
         y.extend([0.0])
 #plt.plot(x,y,'*-')
-fl=open('ss.txt','w')
-for i in range(len(x)):
-    fl.write(str(x[i]))
-    fl.write('\t')
-    fl.write(str(y[i]))
-    fl.write('\n')
-fl.close()
+##fl=open('ss.txt','w')
+##for i in range(len(x)):
+##    fl.write(str(x[i]))
+##    fl.write('\t')
+##    fl.write(str(y[i]))
+##    fl.write('\n')
+##fl.close()
 print('4')
 #------------------------------------------------------
 #
@@ -213,7 +213,7 @@ CitySet=sets.Set(range(1,len(CityList)+1))
 class BACA:
     "implement basic ant colony algorithm"
     # following are some essential parameters/attributes for BACA
-    def __init__(self, cityCount=51, antCount=34, q=80, alpha=2, beta=5, rou=0.2, nMax=10):
+    def __init__(self, cityCount=51, antCount=34, q=80, alpha=2, beta=5, rou=0.4, nMax=50):
         self.CityCount = len(linehead)
         self.AntCount = int(self.CityCount*0.8)
         self.Q = q
@@ -232,8 +232,8 @@ class BACA:
             pheromoneList = []
             pheromoneDeltaList = []
             for col in range(self.CityCount):
-                pheromoneList.append([100,100])               # init pheromone list to const 100
-                pheromoneDeltaList.append(0)            # init pheromone delta list to const 0
+                pheromoneList.append([100,100,100,100])               # init pheromone list to const 100
+                pheromoneDeltaList.append([0,0,0,0])            # init pheromone delta list to const 0
             PheromoneTrailList.append(pheromoneList)
             PheromoneDeltaTrailList.append(pheromoneDeltaList)
        
@@ -283,14 +283,21 @@ class BACA:
     def outRout(self,tour):
         for [city,pos] in tour:
             if pos==1:
-                seg=line[city]
+                seg=line[city-1][::-1]
             else:
-                seg=line[city][::-1]
-            if len(line[city][0])>1:
+                seg=line[city-1]
+            if len(line[city-1][0])>1:
                 x.extend([tp[0] for tp in seg])
                 y.extend([tp[1] for tp in seg])
                 x.extend([0.0])  
                 y.extend([0.0])
+        fl=open('ss.txt','w')
+        for i in range(len(x)):
+            fl.write(str(x[i]))
+            fl.write('\t')
+            fl.write(str(y[i]))
+            fl.write('\n')
+        fl.close()
 
     def Search(self):
         """search solution space"""
@@ -312,32 +319,52 @@ class BACA:
             print (iter,":",self.Shortest,":",BestTour)
             if iter == self.Nmax-1:
                 BestTour = tmpTour[:]
-                outRout(BestTour)
+                self.outRout(BestTour)
             self.UpdatePheromoneTrail()
-##            for ant in AntList:
-##                city = ant.TabuCityList[-1]
-##                ant.ClearTabu()
-##                ant.AddCity(city)
     def UpdatePheromoneTrail(self):    #0======TH 1 TT
         for ant in AntList:
             for city in ant.TabuCityList[0:-1]:
                 idx = ant.TabuCityList.index(city)
                 nextCity = ant.TabuCityList[idx+1]
-                PheromoneDeltaTrailList[city[0]-1][nextCity[0]-1] = self.Q/ant.CurrLen
-                PheromoneDeltaTrailList[nextCity[0]-1][city[0]-1] = self.Q/ant.CurrLen
+                rout=[city[1],nextCity[1]]
+                if rout==[0,0]:
+                    PheromoneDeltaTrailList[city[0]-1][nextCity[0]-1][2] = self.Q/ant.CurrLen
+                elif rout==[0,1]:
+                    PheromoneDeltaTrailList[city[0]-1][nextCity[0]-1][3] = self.Q/ant.CurrLen
+                elif rout==[1,0]:
+                    PheromoneDeltaTrailList[city[0]-1][nextCity[0]-1][0] = self.Q/ant.CurrLen
+                elif rout==[1,1]:
+                    PheromoneDeltaTrailList[city[0]-1][nextCity[0]-1][1] = self.Q/ant.CurrLen
             lastCity = ant.TabuCityList[-1]
             firstCity = ant.TabuCityList[0]
-            PheromoneDeltaTrailList[lastCity[0]-1][firstCity[0]-1] = self.Q/ant.CurrLen
-            PheromoneDeltaTrailList[firstCity[0]-1][lastCity[0]-1] = self.Q/ant.CurrLen
+            rout=[firstCity[1],lastCity[1]]
+            if rout==[0,0]:
+                PheromoneDeltaTrailList[firstCity[0]-1][lastCity[0]-1][2]\
+                        =PheromoneDeltaTrailList[lastCity[0]-1][firstCity[0]-1][0] = self.Q/ant.CurrLen
+            elif rout==[0,1]:
+                PheromoneDeltaTrailList[firstCity[0]-1][lastCity[0]-1][3]\
+                       =PheromoneDeltaTrailList[lastCity[0]-1][firstCity[0]-1][1] = self.Q/ant.CurrLen
+            elif rout==[1,0]:
+                PheromoneDeltaTrailList[firstCity[0]-1][lastCity[0]-1][0]\
+                       =PheromoneDeltaTrailList[lastCity[0]-1][firstCity[0]-1][2] = self.Q/ant.CurrLen
+            elif rout==[1,1]:
+                PheromoneDeltaTrailList[firstCity[0]-1][lastCity[0]-1][1]\
+                      =PheromoneDeltaTrailList[lastCity[0]-1][firstCity[0]-1][3] = self.Q/ant.CurrLen
         for (seg1,seg1,seg1No) in CityList:
             for (seg2,seg2,seg2No) in CityList:
                 city1=seg1No[0][0]
                 city2=seg2No[0][0]
+                #HH HT TH TT
                 PheromoneTrailList[city1-1][city2-1][0] = ((1-self.Rou)*PheromoneTrailList[city1-1][city2-1][0] +
-                                                    PheromoneDeltaTrailList[city1-1][city2-1])
+                                                    PheromoneDeltaTrailList[city1-1][city2-1][0])                               
                 PheromoneTrailList[city1-1][city2-1][1] = ((1-self.Rou)*PheromoneTrailList[city1-1][city2-1][1] +
-                                                    PheromoneDeltaTrailList[city1-1][city2-1])
-                PheromoneDeltaTrailList[city1-1][city2-1] = 0
+                                                    PheromoneDeltaTrailList[city1-1][city2-1][1])                                       
+                PheromoneTrailList[city1-1][city2-1][2] = ((1-self.Rou)*PheromoneTrailList[city1-1][city2-1][2] +
+                                                    PheromoneDeltaTrailList[city1-1][city2-1][2])                                   
+                PheromoneTrailList[city1-1][city2-1][3] = ((1-self.Rou)*PheromoneTrailList[city1-1][city2-1][3] +
+                                                    PheromoneDeltaTrailList[city1-1][city2-1][3])                                                 
+                for  ii in range(4):
+                    PheromoneDeltaTrailList[city1-1][city2-1][ii] = 0
    
 class ANT:
     "implement ant individual"
@@ -357,25 +384,33 @@ class ANT:
         if len(self.AllowedCitySet) == 0:
             return (0)
         sumProbability = 0.0
-        #
+        #HH HT TH TT
         for city in self.AllowedCitySet:
-            sumProbability = sumProbability + (pow(PheromoneTrailList[self.CurrCity[0]-1][city-1][0], alpha)
-                                               * pow(1.0/CityDistanceList[self.CurrCity[0]-1][city-1][2], beta))
-            +(pow(PheromoneTrailList[self.CurrCity[0]-1][city-1][1], alpha)
-              * pow(1.0/CityDistanceList[self.CurrCity[0]-1][city-1][3], beta))
+            segProbability=0
+            currentPos=self.CurrCity[1]
+            if currentPos==1:# it is right for tabu seg Pt
+                banRout=[2,3]
+            else:
+                banRout=[0,1]
+            for HT in range(4):
+                if HT in banRout:
+                    continue
+                segProbability+=(pow(PheromoneTrailList[self.CurrCity[0]-1][city-1][HT], alpha)
+                                               * pow(1.0/CityDistanceList[self.CurrCity[0]-1][city-1][HT], beta))            
+            sumProbability = sumProbability + segProbability
         self.TransferProbabilityList = []
         for city in self.AllowedCitySet:
             currPos = self.CurrCity[1]
             if currPos==0:
-                transferProbability1 = (pow(PheromoneTrailList[self.CurrCity[0]-1][city-1][0], alpha)
+                transferProbability1 = (pow(PheromoneTrailList[self.CurrCity[0]-1][city-1][2], alpha)
                                     * pow(1.0/CityDistanceList[self.CurrCity[0]-1][city-1][2], beta))/sumProbability
-                transferProbability2 = (pow(PheromoneTrailList[self.CurrCity[0]-1][city-1][1], alpha)
+                transferProbability2 = (pow(PheromoneTrailList[self.CurrCity[0]-1][city-1][3], alpha)
                                     * pow(1.0/CityDistanceList[self.CurrCity[0]-1][city-1][3], beta))/sumProbability
             else:
-                transferProbability1 = (pow(PheromoneTrailList[city-1][self.CurrCity[0]-1][0], alpha)
-                                    * pow(1.0/CityDistanceList[city-1][self.CurrCity[0]-1][1], beta))/sumProbability
-                transferProbability2 = (pow(PheromoneTrailList[city-1][self.CurrCity[0]-1][1], alpha)
-                                    * pow(1.0/CityDistanceList[city-1][self.CurrCity[0]-1][0], beta))/sumProbability                  
+                transferProbability1 = (pow(PheromoneTrailList[self.CurrCity[0]-1][city-1][0], alpha)
+                                    * pow(1.0/CityDistanceList[self.CurrCity[0]-1][city-1][0], beta))/sumProbability
+                transferProbability2 = (pow(PheromoneTrailList[self.CurrCity[0]-1][city-1][1], alpha)
+                                    * pow(1.0/CityDistanceList[self.CurrCity[0]-1][city-1][1], beta))/sumProbability                  
             self.TransferProbabilityList.append([city,transferProbability1,transferProbability2])
         # determine next city
         select = 0.0
@@ -409,14 +444,14 @@ class ANT:
         for city in self.TabuCityList[0:-1]:
             nextCity = self.TabuCityList[self.TabuCityList.index(city)+1]
             rout=[city[1],nextCity[1]]
-            distPos=1
+            distPos=4
             if rout==[0,0]:
                 distPos=2
             elif rout==[0,1]:
                 distPos=3
             elif rout==[1,0]:
                 distPos=0
-            elif rout==[0,1]:
+            elif rout==[1,1]:
                 distPos=1
             self.CurrLen = self.CurrLen + CityDistanceList[city[0]-1][nextCity[0]-1][distPos]
         lastCity = self.TabuCityList[-1]
